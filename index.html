@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-inline' cdn.jsdelivr.net fonts.googleapis.com;
+                   style-src 'self' 'unsafe-inline' fonts.googleapis.com fonts.gstatic.com;
+                   font-src 'self' fonts.gstatic.com;
+                   img-src 'self' data: https://p6rsa.github.io/checkout/;
+                   connect-src 'self' https://*.supabase.co https://s6x.com.br cdn.jsdelivr.net;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Persa - Checkout">
+    <meta name="theme-color" content="#000000">
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="icon" type="image/png" href="images/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="images/favicon-32x32.png">
+    <title>Persa - Checkout</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <meta property="og:title" content="Persa - Checkout">
+    <meta property="og:description" content="Pague aqui pelo seu serviço de acesso a documentos digitais. Processo simples, rápido e seguro.">
+    <meta property="og:image" content="https://p6rsa.github.io/checkout/images/capa.png">
+    <meta property="og:url" content="https://p6rsa.github.io/checkout/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Persa - Checkout">
+    <meta name="twitter:description" content="Pague aqui pelo seu serviço de acesso a documentos digitais. Processo simples, rápido e seguro.">
+    <meta name="twitter:image" content="https://p6rsa.github.io/checkout/images/capa.png">
+    <meta name="description" content="Pague aqui pelo seu serviço de acesso a documentos digitais. Processo simples, rápido e seguro.">
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+    <style>
+        :root {
+            --bg-body: #fafafa;
+            --bg-card: #fff;
+            --bg-input: #fff;
+            --bg-header: #000;
+            --text-primary: #171717;
+            --text-secondary: #525252;
+            --text-muted: #737373;
+            --border-color: #e5e5e5;
+            --accent: #22c55e;
+        }
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+        body {
+            background: var(--bg-body);
+            color: var(--text-primary);
+            min-height: 100vh;
+            margin: 0;
+        }
+        .checkout-wrapper {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .checkout-header {
+            background: var(--bg-header);
+            padding: 1rem 0;
+            text-align: center;
+        }
+        .checkout-header img {
+            height: 28px;
+            filter: brightness(0) invert(1);
+        }
+        .checkout-banner {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+        .checkout-banner img,
+        .checkout-banner video {
+            width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+        .checkout-banner iframe {
+            width: 100%;
+            aspect-ratio: 16/9;
+            height: auto;
+            border-radius: 12px;
+        }
+        @media (max-width: 600px) {
+            .checkout-banner {
+                padding: 0 0.5rem;
+                margin: 0 auto;
+            }
+            .checkout-banner img,
+            .checkout-banner video,
+            .checkout-banner iframe {
+                border-radius: 8px;
+            }
+        }
+        .checkout-container {
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0.75rem 1rem 2rem;
+            width: 100%;
+        }
+        .checkout-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .plan-selector-inline { }
+        .checkout-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+        .steps-header {
+            display: flex;
+            background: var(--bg-header);
+            padding: 0;
+        }
+        .step-tab {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            color: #a3a3a3;
+            font-size: 0.8rem;
+            font-weight: 500;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .step-tab.active {
+            color: var(--text-primary);
+            background: var(--bg-input);
+        }
+        .step-tab.completed {
+            color: var(--accent);
+        }
+        .step-number {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #e5e5e5;
+            color: #737373;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .step-tab.active .step-number {
+            background: #000;
+            color: #fff;
+        }
+        .step-tab.completed .step-number {
+            background: var(--accent);
+            color: #fff;
+        }
+        .step-content {
+            padding: 1.5rem;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            display: block;
+            font-weight: 500;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.375rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .form-control:focus {
+            outline: none;
+            border-color: var(--text-primary);
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+        }
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        .btn-primary {
+            width: 100%;
+            padding: 0.875rem;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            background: #171717;
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .payment-options {
+            display: flex;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+        .payment-option {
+            flex: 1;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            background: var(--bg-input);
+        }
+        .payment-option:hover {
+            border-color: var(--text-primary);
+        }
+        .payment-option.active {
+            border-color: var(--text-primary);
+            background: var(--bg-input);
+        }
+        .payment-option .payment-icon {
+            width: 28px;
+            height: 28px;
+            margin-bottom: 0.5rem;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+            filter: invert(1);
+        }
+        .payment-option span {
+            font-weight: 500;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+        .pix-box {
+            background: var(--bg-input);
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .pix-qrcode {
+            max-width: 180px;
+            width: 180px;
+            height: 180px;
+            margin: 0 auto 1rem;
+            border-radius: 8px;
+            display: block;
+            object-fit: contain;
+            background: #fff;
+            padding: 8px;
+        }
+        .pix-copy-btn {
+            background: #000;
+            color: #fff;
+            border: none;
+            padding: 0.625rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .pix-copy-btn:hover {
+            background: #171717;
+        }
+        .order-summary {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-color);
+        }
+        .order-summary h3 {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .plan-option {
+            display: flex;
+            align-items: center;
+            padding: 0.875rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .plan-option:hover {
+            border-color: var(--text-secondary);
+        }
+        .plan-option.active {
+            border-color: var(--text-primary);
+            background: var(--bg-input);
+        }
+        .plan-option input { display: none; }
+        .plan-check {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d4d4d4;
+            border-radius: 4px;
+            margin-right: 0.75rem;
+            position: relative;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .plan-option.active .plan-check {
+            border-color: var(--text-primary);
+            background: var(--text-primary);
+        }
+        .plan-option.active .plan-check::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 5px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid #fff;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+        .plan-info { flex: 1; }
+        .plan-name {
+            font-weight: 600;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+        }
+        .plan-duration {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .plan-price {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .order-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 1rem;
+        }
+        .order-total-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+        .order-total-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        .security-info {
+            display: flex;
+            justify-content: center;
+            gap: 1.25rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        .security-item {
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .security-item i { color: var(--accent); }
+        .hidden { display: none !important; }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.8rem;
+        }
+        .alert-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+        .alert-info {
+            background: #f0f9ff;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+        .alert-success {
+            background: #f0fdf4;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+        .success-box {
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: #f0fdf4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .success-icon i {
+            font-size: 1.75rem;
+            color: var(--accent);
+        }
+        .password-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .password-input-wrapper .form-control {
+            padding-right: 45px;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: color 0.15s ease;
+        }
+        .password-toggle:hover {
+            color: var(--text-primary);
+        }
+        .password-toggle svg {
+            width: 20px;
+            height: 20px;
+        }
+        .checkout-footer {
+            text-align: center;
+            padding: 0.5rem 1.5rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+        .plan-option.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+            background: #f5f5f5;
+        }
+        .plan-option.disabled .plan-name {
+            color: var(--text-muted);
+        }
+        .plan-badge-unavailable {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #fff;
+            background: #a3a3a3;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin-left: 0.4rem;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+        .plan-badge-bestseller {
+            position: absolute;
+            top: -1px;
+            right: -1px;
+            background: #000;
+            color: #fff;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 0 8px 0 8px;
+            letter-spacing: 0.02em;
+            white-space: nowrap;
+        }
+        .plan-qty {
+            display: none;
+            align-items: center;
+            gap: 0.4rem;
+            margin-left: 0.75rem;
+            flex-shrink: 0;
+        }
+        .plan-option.active .plan-qty {
+            display: flex;
+        }
+        .plan-qty-btn {
+            width: 26px;
+            height: 26px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 6px;
+            background: var(--bg-body);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+            line-height: 1;
+            padding: 0;
+        }
+        .plan-qty-btn:hover { background: #e5e5e5; }
+        .plan-qty-value {
+            font-size: 0.875rem;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+            color: var(--text-primary);
+        }
+        /* Tela de pagamento confirmado */
+        .payment-confirmed-box {
+            text-align: center;
+            padding: 1rem 0;
+        }
+        .payment-confirmed-icon {
+            width: 64px;
+            height: 64px;
+            background: #f0fdf4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+        }
+        .payment-confirmed-icon i {
+            font-size: 1.75rem;
+            color: var(--accent);
+        }
+        .download-link-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #25D366;
+            color: #fff;
+            text-decoration: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            transition: background 0.15s ease;
+            width: 100%;
+            justify-content: center;
+        }
+        .download-link-btn:hover { background: #1ebe5d; color: #fff; }
+
+        /* ============================================================
+           Doação Gatópoles — CSS (de ler.html)
+        ============================================================ */
+        .donation-box {
+            border: 1.5px dashed #f97316;
+            border-radius: 8px;
+            padding: 0.50rem 0.40rem;
+            margin-top: 0.50rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            cursor: pointer;
+            transition: background 0.20s ease;
+            background: #fff7ed;
+        }
+        .donation-box:hover { background: #ffedd5; }
+        .donation-check {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #f97316;
+            border-radius: 4px;
+            flex-shrink: 0;
+            position: relative;
+            transition: all 0.20s ease;
+        }
+        .donation-box.active .donation-check {
+            background: #f97316;
+            border-color: #f97316;
+        }
+        .donation-box.active .donation-check::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            width: 5px;
+            height: 9px;
+            border: 2px solid #fff;
+            border-top: none;
+            border-left: none;
+            transform: rotate(45deg);
+        }
+        .donation-text { flex: 1; }
+        .donation-text strong {
+            font-size: 0.7rem;
+            color: #c2410c;
+            display: flex;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        .donation-text span {
+            font-size: 0.6rem;
+            color: #9a3412;
+            line-height: 1.3;
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="checkout-wrapper">
+
+        <header class="checkout-header">
+            <img src="images/logo.png" alt="Logo">
+        </header>
+
+        <div class="checkout-banner">
+            <img src="images/capa.png" alt="Capa">
+        </div>
+
+        <div class="checkout-container">
+            <div class="checkout-grid">
+                <div class="checkout-card">
+
+                    <!-- Cabeçalho dos steps (4 steps — de index.html) -->
+                    <div class="steps-header">
+                        <div class="step-tab active" id="step1-tab">
+                            <span class="step-number">1</span> Cadastro
+                        </div>
+                        <div class="step-tab" id="step2-tab">
+                            <span class="step-number">2</span> Serviço
+                        </div>
+                        <div class="step-tab" id="step3-tab">
+                            <span class="step-number">3</span> Pagamento
+                        </div>
+                        <div class="step-tab" id="step4-tab">
+                            <span class="step-number">4</span> Arquivo
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Cadastro (com campo CPF — de index.html) -->
+                    <div class="step-content" id="step1">
+                        <div id="step1-alert"></div>
+                        <div class="form-group">
+                            <label class="form-label">Nome completo</label>
+                            <input type="text" class="form-control" id="name" placeholder="Seu nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-control" id="email" placeholder="seu@email.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Senha</label>
+                            <div class="password-input-wrapper">
+                                <input type="password" class="form-control" id="password" placeholder="Mínimo 8 caracteres" required>
+                                <button type="button" class="password-toggle" onclick="togglePassword('password', this)" aria-label="Mostrar senha">
+                                    <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                    <svg class="eye-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CPF</label>
+                            <input type="text" class="form-control" id="cpf" placeholder="000.000.000-00" maxlength="14" required>
+                        </div>
+                        <button type="button" class="btn-primary" id="btn-step1">
+                            Continuar <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Serviço (planos e preços de ler.html + donation box) -->
+                    <div class="step-content hidden" id="step2">
+                        <div id="step2-alert"></div>
+                        <h4 style="font-weight: 600; font-size: 1rem; margin-bottom: 1rem; color: var(--text-primary);">
+                            <i class="bi bi-box-seam me-2"></i>Escolha seu serviço
+                        </h4>
+                        <div class="plan-selector-inline">
+
+                            <!-- RG 2026 — Mais vendido (padrão selecionado) -->
+                            <label class="plan-option active" data-plan-id="5" data-plan-price="89.90" style="position: relative;">
+                                <span class="plan-badge-bestseller">Mais vendido 🔥</span>
+                                <input type="checkbox" name="plan_id" value="5" checked>
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Acesso Registro Geral (RG) 2026</div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price" id="price-display-5">R$ 89,90</div>
+                                <div class="plan-qty" id="qty-5">
+                                    <button type="button" class="plan-qty-btn" data-action="minus" data-plan-id="5">−</button>
+                                    <span class="plan-qty-value" id="qty-val-5">1</span>
+                                    <button type="button" class="plan-qty-btn" data-action="plus" data-plan-id="5">+</button>
+                                </div>
+                            </label>
+
+                            <!-- RG 2024 -->
+                            <label class="plan-option" data-plan-id="1" data-plan-price="69.90">
+                                <input type="checkbox" name="plan_id" value="1">
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Acesso Registro Geral (RG) 2024</div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price" id="price-display-1">R$ 69,90</div>
+                                <div class="plan-qty" id="qty-1">
+                                    <button type="button" class="plan-qty-btn" data-action="minus" data-plan-id="1">−</button>
+                                    <span class="plan-qty-value" id="qty-val-1">0</span>
+                                    <button type="button" class="plan-qty-btn" data-action="plus" data-plan-id="1">+</button>
+                                </div>
+                            </label>
+
+                            <!-- DNE 2026 -->
+                            <label class="plan-option" data-plan-id="3" data-plan-price="49.90">
+                                <input type="checkbox" name="plan_id" value="3">
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Acesso Documento Nacional do Estudante (DNE) 2026</div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price" id="price-display-3">R$ 49,90</div>
+                                <div class="plan-qty" id="qty-3">
+                                    <button type="button" class="plan-qty-btn" data-action="minus" data-plan-id="3">−</button>
+                                    <span class="plan-qty-value" id="qty-val-3">0</span>
+                                    <button type="button" class="plan-qty-btn" data-action="plus" data-plan-id="3">+</button>
+                                </div>
+                            </label>
+
+                            <!-- Atestado Médico 1–3 dias -->
+                            <label class="plan-option" data-plan-id="7" data-plan-price="18.90">
+                                <input type="checkbox" name="plan_id" value="7">
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Atestado Médico - 1 à 3 dias</div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price" id="price-display-7">R$ 18,90</div>
+                                <div class="plan-qty" id="qty-7">
+                                    <button type="button" class="plan-qty-btn" data-action="minus" data-plan-id="7">−</button>
+                                    <span class="plan-qty-value" id="qty-val-7">0</span>
+                                    <button type="button" class="plan-qty-btn" data-action="plus" data-plan-id="7">+</button>
+                                </div>
+                            </label>
+
+                            <!-- Atestado Médico 3–7 dias -->
+                            <label class="plan-option" data-plan-id="8" data-plan-price="25.90">
+                                <input type="checkbox" name="plan_id" value="8">
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Atestado Médico - 3 à 7 dias</div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price" id="price-display-8">R$ 25,90</div>
+                                <div class="plan-qty" id="qty-8">
+                                    <button type="button" class="plan-qty-btn" data-action="minus" data-plan-id="8">−</button>
+                                    <span class="plan-qty-value" id="qty-val-8">0</span>
+                                    <button type="button" class="plan-qty-btn" data-action="plus" data-plan-id="8">+</button>
+                                </div>
+                            </label>
+
+                            <!-- Indisponíveis -->
+                            <label class="plan-option disabled" data-plan-id="4" data-plan-price="39.90">
+                                <input type="checkbox" name="plan_id" value="4" disabled>
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Acesso Cadastro de Pessoa Física (CPF) 2024 <span class="plan-badge-unavailable">Indisponível</span></div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price">R$ 39,90</div>
+                            </label>
+                            <label class="plan-option disabled" data-plan-id="2" data-plan-price="189.90">
+                                <input type="checkbox" name="plan_id" value="2" disabled>
+                                <div class="plan-check"></div>
+                                <div class="plan-info">
+                                    <div class="plan-name">Acesso Carteira Nacional de Habilitação (CNH) 2026 <span class="plan-badge-unavailable">Indisponível</span></div>
+                                    <div class="plan-desc">Pagamento único</div>
+                                </div>
+                                <div class="plan-price">R$ 189,90</div>
+                            </label>
+                        </div>
+
+                        <!-- Doação Gatópoles (de ler.html) -->
+                        <div class="donation-box" id="donation-box" onclick="toggleDonation()">
+                            <div class="donation-check" id="donation-check"></div>
+                            <div class="donation-text">
+                                <strong>🐱 Ajude a ONG Gatópoles + R$ 1,00</strong>
+                                <span>Adicione R$ 1,00 ao seu pedido e ajude a cuidar de gatinhos em situação de rua.
+                                Prefere doar diretamente?
+                                <a href="https://www.gatopoles.com.br/como-ajudar" target="_blank" rel="noopener" onclick="event.stopPropagation()">Clique aqui</a>.</span>
+                            </div>
+                        </div>
+
+                        <div class="order-total" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+                            <span class="order-total-label">Total</span>
+                            <span class="order-total-value" id="total-price">R$ 89,90</span>
+                        </div>
+                        <button type="button" class="btn-primary" id="btn-step2" style="margin-top: 1rem;">
+                            Continuar <i class="bi bi-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 3: Pagamento (com integração S6xPay — de index.html) -->
+                    <div class="step-content hidden" id="step3">
+                        <div id="step3-alert"></div>
+
+                        <p style="font-weight: 600; font-size: 0.875rem; margin-bottom: 0.75rem; color: var(--text-primary);">Forma de pagamento</p>
+                        <div class="payment-options">
+                            <label class="payment-option active" data-method="pix">
+                                <input type="radio" name="payment_method" value="pix" checked>
+                                <img src="images/pix.svg" alt="PIX" class="payment-icon">
+                                <span>PIX</span>
+                            </label>
+                        </div>
+
+                        <div id="pix-form" style="text-align: center;">
+                            <button type="button" class="btn-primary" id="btn-generate-pix" style="width: 100%;">
+                                <i class="bi bi-qr-code"></i> Gerar PIX
+                            </button>
+                        </div>
+
+                        <div id="pix-code" class="pix-box hidden">
+                            <img id="pix-qrcode-img" class="pix-qrcode" alt="QR Code PIX">
+                            <p style="margin-bottom: 0.75rem; font-weight: 500; font-size: 0.875rem; color: var(--text-primary); width: 100%;">Escaneie ou copie o código</p>
+                            <input type="text" id="pix-copy-code" class="form-control" readonly style="text-align: center; margin-bottom: 0.75rem; font-size: 0.65rem; width: 100%;">
+                            <button type="button" class="pix-copy-btn" onclick="copyPixCode()">
+                                <i class="bi bi-clipboard"></i> Copiar código
+                            </button>
+                            <p style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); width: 100%;">
+                                <i class="bi bi-clock"></i> Aguardando confirmação...
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Download (de index.html) -->
+                    <div class="step-content hidden" id="step4">
+                        <div class="payment-confirmed-box">
+                            <div class="payment-confirmed-icon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </div>
+                            <h4 style="font-weight: 700; font-size: 1rem; margin-bottom: 0.25rem; color: var(--text-primary);">Pagamento confirmado!</h4>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1rem;">Clique no botão abaixo para receber seu arquivo.</p>
+                            <div id="download-links"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="security-footer" style="text-align: center; margin-top: 0rem; padding: 0.6rem 1rem 0.3rem; color: var(--text-muted); font-size: 0.75rem;">
+                    <i class="bi bi-shield-check"></i> Compra segura
+                    <span style="margin: 0 0.5rem;">•</span>
+                    <i class="bi bi-lock"></i> Criptografado
+                </div>
+            </div>
+        </div>
+
+        <footer class="checkout-footer">
+            <a href="https://wa.me/5511963842095" target="_blank" style="color: #25D366; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.17 1.535 5.943L.057 23.571a.75.75 0 0 0 .93.899l5.83-1.528A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.9 9.9 0 0 1-5.031-1.37l-.361-.214-3.733.979.995-3.638-.235-.374A9.862 9.862 0 0 1 2.1 12C2.1 6.533 6.533 2.1 12 2.1c5.466 0 9.9 4.433 9.9 9.9 0 5.466-4.434 9.9-9.9 9.9z"/>
+                </svg>
+                Suporte
+            </a>
+            <div>© 2026. Persa Cards Todos os direitos reservados.</div>
+        </footer>
+    </div>
+
+    <script>
+        // ============================================================
+        // CONFIGURAÇÃO SUPABASE
+        // ============================================================
+        const SUPABASE_URL  = 'https://bmpyrscwgbhvalnhmovb.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJtcHlyc2N3Z2JodmFsbmhtb3ZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjU2ODksImV4cCI6MjA4OTM0MTY4OX0.qgKi9Y4lywDOlYelEdk0_r44U5r8EwuSi4HqK6TveBc';
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+        // ============================================================
+        // DADOS DOS PLANOS (preços e planos de ler.html)
+        // ============================================================
+        let selectedPlanId = 1; // mantido para compatibilidade
+        const plansData = {
+            1:  { id: 'plan_1',  name: 'Acesso Registro Geral (RG) 2024',                    price: 69.90  },
+            2:  { id: 'plan_2',  name: 'Acesso Carteira Nacional de Habilitação (CNH) 2026', price: 189.90 },
+            3:  { id: 'plan_3',  name: 'Acesso Documento Nacional do Estudante (DNE) 2026',  price: 49.90  },
+            4:  { id: 'plan_4',  name: 'Acesso Cadastro de Pessoa Física (CPF) 2024',        price: 39.90  },
+            5:  { id: 'plan_5',  name: 'Acesso Registro Geral (RG) 2026',                    price: 89.90  },
+            7:  { id: 'plan_7',  name: 'Atestado Médico de 1 a 3 dias',                      price: 18.90  },
+            8:  { id: 'plan_8',  name: 'Atestado Médico de mais de 3 a 7 dias',              price: 25.90  },
+            9:  { id: 'plan_9',  name: 'Atestado Médico de 7 a 30 dias',                     price: 29.90  },
+            10: { id: 'plan_10', name: 'Histórico Escolar',                                  price: 39.90  },
+            11: { id: 'plan_11', name: 'Certificado de Conclusão Escolar',                   price: 39.90  },
+            12: { id: 'plan_12', name: 'Certidão de Nascimento',                             price: 49.90  },
+            13: { id: 'plan_13', name: 'Comprovante de Residência',                          price: 29.90  },
+        };
+
+        // Armazena temporariamente os dados do usuário entre steps
+        let userData = { name: '', email: '', password: '', cpf: '' };
+
+        // ============================================================
+        // UTILITÁRIOS
+        // ============================================================
+        function showAlert(containerId, message, type = 'danger') {
+            document.getElementById(containerId).innerHTML =
+                `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        function clearAlert(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        function sanitize(str) {
+            return str.replace(/[<>"'`]/g, '').trim();
+        }
+
+        let submitting = false;
+
+        // setStep itera até 4 (de index.html)
+        function setStep(step) {
+            for (let i = 1; i <= 4; i++) {
+                const stepEl = document.getElementById('step' + i);
+                if (stepEl) stepEl.classList.toggle('hidden', i !== step);
+                const tab = document.getElementById('step' + i + '-tab');
+                if (tab) {
+                    tab.classList.remove('active', 'completed');
+                    if (i < step) tab.classList.add('completed');
+                    if (i === step) tab.classList.add('active');
+                }
+            }
+        }
+
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const eyeIcon    = button.querySelector('.eye-icon');
+            const eyeOffIcon = button.querySelector('.eye-off-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.style.display    = 'none';
+                eyeOffIcon.style.display = 'block';
+                button.setAttribute('aria-label', 'Ocultar senha');
+            } else {
+                input.type = 'password';
+                eyeIcon.style.display    = 'block';
+                eyeOffIcon.style.display = 'none';
+                button.setAttribute('aria-label', 'Mostrar senha');
+            }
+        }
+
+        // Máscara de CPF (de index.html)
+        document.getElementById('cpf').addEventListener('input', function () {
+            let v = this.value.replace(/\D/g, '').slice(0, 11);
+            if (v.length > 9)      v = v.replace(/(\d{3})(\d{3})(\d{3})(\d+)/, '$1.$2.$3-$4');
+            else if (v.length > 6) v = v.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
+            else if (v.length > 3) v = v.replace(/(\d{3})(\d+)/, '$1.$2');
+            this.value = v;
+        });
+
+        // validateCPF (de index.html)
+        function validateCPF(cpf) {
+            const digits = cpf.replace(/\D/g, '');
+            if (digits.length !== 11 || /^(\d)\1+$/.test(digits)) return false;
+            let sum = 0;
+            for (let i = 0; i < 9; i++) sum += parseInt(digits[i]) * (10 - i);
+            let r = (sum * 10) % 11;
+            if (r === 10 || r === 11) r = 0;
+            if (r !== parseInt(digits[9])) return false;
+            sum = 0;
+            for (let i = 0; i < 10; i++) sum += parseInt(digits[i]) * (11 - i);
+            r = (sum * 10) % 11;
+            if (r === 10 || r === 11) r = 0;
+            return r === parseInt(digits[10]);
+        }
+
+        function validateName(name) {
+            if (!name || name.length < 3)
+                return { valid: false, message: 'Digite seu nome completo.' };
+            if (/\d/.test(name))
+                return { valid: false, message: 'O nome não pode conter números.' };
+            if (!/^[\p{L}\s\.\-]+$/u.test(name))
+                return { valid: false, message: 'O nome contém caracteres inválidos.' };
+            const parts = name.split(/\s+/).filter(p => p.length >= 2);
+            if (parts.length < 2)
+                return { valid: false, message: 'Digite seu nome e sobrenome.' };
+            return { valid: true };
+        }
+
+        function validateEmail(email) {
+            if (!email)
+                return { valid: false, message: 'Digite seu e-mail.' };
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+                return { valid: false, message: 'Digite um e-mail válido.' };
+            return { valid: true };
+        }
+
+        // ============================================================
+        // SUPABASE — funções de persistência
+        // ============================================================
+
+        // INSERT no step 1 — salva name, email, password, cpf
+        async function insertLead(name, email, password) {
+            try {
+                const { error } = await db
+                    .from('leads')
+                    .insert([{ name, email, password }]);
+                if (error) console.warn('[Supabase] Erro ao inserir lead:', error.message);
+                else       console.log('[Supabase] Lead inserido com sucesso.');
+            } catch (e) {
+                console.warn('[Supabase] Exceção ao inserir lead:', e);
+            }
+        }
+
+        // INSERT na tabela orders no step 2
+        async function insertOrder(email, planId, qty = 1) {
+            try {
+                const plan = plansData[planId] || {};
+                const { error } = await db
+                    .from('orders')
+                    .insert([{
+                        email,
+                        service_name: plan.name  || null,
+                        price:        (plan.price || 0) * qty,
+                        quantity:     qty
+                    }]);
+                if (error) console.warn('[Supabase] Erro ao inserir order:', error.message);
+                else       console.log('[Supabase] Order inserida:', plan.name, 'x' + qty);
+            } catch (e) {
+                console.warn('[Supabase] Exceção ao inserir order:', e);
+            }
+        }
+
+        // INSERT na tabela donations — salva após pagamento confirmado (de ler.html)
+        async function insertDonation(email, donated) {
+            try {
+                const { error } = await db
+                    .from('donations')
+                    .insert([{ email, donated }]);
+                if (error) console.warn('[Supabase] Erro ao inserir donation:', error.message);
+                else       console.log('[Supabase] Donation inserida:', donated);
+            } catch (e) {
+                console.warn('[Supabase] Exceção ao inserir donation:', e);
+            }
+        }
+
+        // ============================================================
+        // SELEÇÃO DE PLANOS — multi-select com quantidade e soma
+        // (planQuantities com todos os IDs de ler.html)
+        // ============================================================
+        let selectedPlanIds = [5];
+        const planQuantities = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 1, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0 };
+
+        // Doação Gatópoles (de ler.html)
+        let donationSelected = false;
+
+        function toggleDonation() {
+            donationSelected = !donationSelected;
+            document.getElementById('donation-box').classList.toggle('active', donationSelected);
+            recalcTotal();
+        }
+
+        function formatBRL(value) {
+            return 'R$ ' + value.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+        }
+
+        // recalcTotal com doação (de ler.html)
+        function recalcTotal() {
+            const total = selectedPlanIds.reduce((sum, id) => {
+                return sum + (plansData[id]?.price || 0) * (planQuantities[id] || 1);
+            }, 0) + (donationSelected ? 1 : 0);
+            document.getElementById('total-price').textContent = formatBRL(total);
+        }
+
+        function updatePriceDisplay(planId) {
+            const el = document.getElementById('price-display-' + planId);
+            if (!el) return;
+            const qty = planQuantities[planId] || 1;
+            el.textContent = formatBRL((plansData[planId]?.price || 0) * qty);
+        }
+
+        // Clique na opção — seleciona/deseleciona
+        document.querySelectorAll('.plan-option:not(.disabled)').forEach(option => {
+            option.addEventListener('click', function (e) {
+                if (e.target.closest('.plan-qty-btn')) return;
+                e.preventDefault();
+
+                const planId   = parseInt(this.dataset.planId);
+                const checkbox = this.querySelector('input[type="checkbox"]');
+                const idx      = selectedPlanIds.indexOf(planId);
+
+                if (idx === -1) {
+                    planQuantities[planId] = 1;
+                    selectedPlanIds.push(planId);
+                    this.classList.add('active');
+                    checkbox.checked = true;
+                    document.getElementById('qty-val-' + planId).textContent = 1;
+                    updatePriceDisplay(planId);
+                } else {
+                    if (selectedPlanIds.length === 1) return;
+                    planQuantities[planId] = 0;
+                    selectedPlanIds.splice(idx, 1);
+                    this.classList.remove('active');
+                    checkbox.checked = false;
+                    const qtyVal = document.getElementById('qty-val-' + planId);
+                    if (qtyVal) qtyVal.textContent = 0;
+                    updatePriceDisplay(planId);
+                }
+
+                recalcTotal();
+            });
+        });
+
+        // Botões + e − de quantidade
+        document.querySelectorAll('.plan-qty-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                e.preventDefault();
+                const planId = parseInt(this.dataset.planId);
+                const action = this.dataset.action;
+                let qty = planQuantities[planId] || 1;
+
+                if (action === 'plus') {
+                    qty = Math.min(qty + 1, 99);
+                } else {
+                    qty = Math.max(qty - 1, 1);
+                }
+
+                planQuantities[planId] = qty;
+                document.getElementById('qty-val-' + planId).textContent = qty;
+                updatePriceDisplay(planId);
+                recalcTotal();
+            });
+        });
+
+        // ============================================================
+        // PAGAMENTO CONFIRMADO — chama insertDonation, vai para step 4
+        // (merge: insertDonation de ler.html + setStep(4) de index.html)
+        // ============================================================
+        function showPaymentConfirmed() {
+            // Salva doação no Supabase (de ler.html)
+            insertDonation(userData.email, donationSelected);
+
+            // Esconde o formulário PIX antes de avançar (de ler.html)
+            const pixForm = document.getElementById('pix-form');
+            const pixCode = document.getElementById('pix-code');
+            if (pixForm) pixForm.classList.add('hidden');
+            if (pixCode) pixCode.classList.add('hidden');
+
+            // Monta os links de download para cada serviço selecionado
+            const container = document.getElementById('download-links');
+            container.innerHTML = '';
+
+            selectedPlanIds.forEach(planId => {
+                const plan = plansData[planId];
+                if (!plan) return;
+                const qty         = planQuantities[planId] || 1;
+                const serviceName = plan.name;
+                const buyerName   = userData.name || 'Cliente';
+
+                const msg = encodeURIComponent(
+                    `*Pagamento confirmado.* Download do arquivo: (${serviceName}${qty > 1 ? ` x${qty}` : ''}) de (${buyerName}). ✅`
+                );
+                const waLink = `https://wa.me/5511963842095?text=${msg}`;
+                const label  = qty > 1 ? `${serviceName} (x${qty})` : serviceName;
+
+                const a = document.createElement('a');
+                a.href      = waLink;
+                a.target    = '_blank';
+                a.rel       = 'noopener noreferrer';
+                a.className = 'download-link-btn';
+                a.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.124.558 4.17 1.535 5.943L.057 23.571a.75.75 0 0 0 .93.899l5.83-1.528A11.945 11.945 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.9a9.9 9.9 0 0 1-5.031-1.37l-.361-.214-3.733.979.995-3.638-.235-.374A9.862 9.862 0 0 1 2.1 12C2.1 6.533 6.533 2.1 12 2.1c5.466 0 9.9 4.433 9.9 9.9 0 5.466-4.434 9.9-9.9 9.9z"/></svg> ${label}`;
+                container.appendChild(a);
+            });
+
+            // Navega para o step 4 (de index.html)
+            setStep(4);
+        }
+
+        // ============================================================
+        // STEP 1 — Cadastro (com validação de CPF — de index.html)
+        // ============================================================
+        document.getElementById('btn-step1').addEventListener('click', async function () {
+            if (submitting) return;
+
+            const btn      = this;
+            const name     = sanitize(document.getElementById('name').value);
+            const email    = sanitize(document.getElementById('email').value);
+            const cpf      = document.getElementById('cpf').value.replace(/\D/g, '');
+            const password = document.getElementById('password').value;
+
+            clearAlert('step1-alert');
+
+            const nameValidation = validateName(name);
+            if (!nameValidation.valid) {
+                showAlert('step1-alert', nameValidation.message);
+                document.getElementById('name').focus();
+                return;
+            }
+
+            const emailValidation = validateEmail(email);
+            if (!emailValidation.valid) {
+                showAlert('step1-alert', emailValidation.message);
+                document.getElementById('email').focus();
+                return;
+            }
+
+            if (!validateCPF(cpf)) {
+                showAlert('step1-alert', 'Digite um CPF válido.');
+                document.getElementById('cpf').focus();
+                return;
+            }
+
+            if (password.length < 8) {
+                showAlert('step1-alert', 'A senha deve ter pelo menos 8 caracteres.');
+                document.getElementById('password').focus();
+                return;
+            }
+
+            submitting    = true;
+            btn.disabled  = true;
+            btn.innerHTML = '<span class="loading"></span> Processando...';
+
+            userData = { name, email, password, cpf };
+            await insertLead(name, email, password);
+
+            btn.disabled  = false;
+            btn.innerHTML = 'Continuar <i class="bi bi-arrow-right"></i>';
+            submitting    = false;
+
+            setStep(2);
+        });
+
+        // ============================================================
+        // STEP 2 — Serviço (multi-select com quantidade)
+        // ============================================================
+        document.getElementById('btn-step2').addEventListener('click', async function () {
+            if (selectedPlanIds.length === 0) {
+                showAlert('step2-alert', 'Selecione pelo menos um serviço.');
+                return;
+            }
+            for (const planId of selectedPlanIds) {
+                const qty = planQuantities[planId] || 1;
+                await insertOrder(userData.email, planId, qty);
+            }
+            setStep(3);
+        });
+
+        // ============================================================
+        // STEP 3 — Integração S6xPay (de index.html)
+        // ============================================================
+        const SUPABASE_FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1`;
+        let pollingInterval      = null;
+        let currentTransactionId = null;
+
+        document.getElementById('btn-generate-pix').addEventListener('click', async function () {
+            const btn = this;
+            clearAlert('step3-alert');
+
+            const services = selectedPlanIds.map(id => ({
+                id:       plansData[id].id,
+                name:     plansData[id].name,
+                price:    plansData[id].price,
+                quantity: planQuantities[id] || 1,
+            }));
+
+            const total = selectedPlanIds.reduce((sum, id) =>
+                sum + (plansData[id]?.price || 0) * (planQuantities[id] || 1), 0)
+                + (donationSelected ? 1 : 0);
+
+            btn.disabled  = true;
+            btn.innerHTML = '<span class="loading"></span> Gerando PIX...';
+
+            try {
+                const res = await fetch(`${SUPABASE_FUNCTIONS_URL}/create-payment`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON}`,
+                    },
+                    body: JSON.stringify({
+                        amount: total,
+                        customer: {
+                            name:     userData.name,
+                            document: userData.cpf,
+                            email:    userData.email,
+                        },
+                        services,
+                    }),
+                });
+
+                const json = await res.json();
+
+                if (!json.success) throw new Error(json.message || 'Erro ao gerar PIX.');
+
+                const pix            = json.data.pix;
+                currentTransactionId = json.data.transaction_id;
+
+                document.getElementById('pix-qrcode-img').src =
+                    `data:image/png;base64,${pix.qr_code_base64}`;
+                document.getElementById('pix-copy-code').value = pix.copy_paste;
+                document.getElementById('pix-form').classList.add('hidden');
+                document.getElementById('pix-code').classList.remove('hidden');
+
+                // Polling a cada 4 segundos
+                pollingInterval = setInterval(async () => {
+                    try {
+                        const checkRes = await fetch(
+                            `${SUPABASE_FUNCTIONS_URL}/check-payment?id=${currentTransactionId}`,
+                            { headers: { 'Authorization': `Bearer ${SUPABASE_ANON}` } }
+                        );
+                        const checkJson = await checkRes.json();
+
+                        if (checkJson?.data?.status === 'paid') {
+                            clearInterval(pollingInterval);
+                            showPaymentConfirmed();
+                        }
+                    } catch (_) { /* silencioso */ }
+                }, 4000);
+
+            } catch (err) {
+                showAlert('step3-alert', `<i class="bi bi-exclamation-circle me-1"></i> ${err.message}`, 'danger');
+                btn.disabled  = false;
+                btn.innerHTML = '<i class="bi bi-qr-code"></i> Gerar PIX';
+            }
+        });
+
+        function copyPixCode() {
+            navigator.clipboard.writeText(document.getElementById('pix-copy-code').value);
+            const btn = event.target.closest('button');
+            btn.innerHTML = '<i class="bi bi-check"></i> Copiado!';
+            setTimeout(() => btn.innerHTML = '<i class="bi bi-clipboard"></i> Copiar código', 2000);
+        }
+    </script>
+
+</body>
+</html>
